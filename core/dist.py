@@ -1,6 +1,6 @@
 import os
 import io
-import re 
+import re
 import subprocess
 import logging
 import random
@@ -29,7 +29,7 @@ def get_global_rank():
     elif os.environ.get('OMPI_COMM_WORLD_RANK') is not None:
         return int(os.environ.get('OMPI_COMM_WORLD_RANK') or 0)
     else:
-        return 0 
+        return 0
 
 
 def get_local_rank():
@@ -41,7 +41,7 @@ def get_local_rank():
     elif os.environ.get('OMPI_COMM_WORLD_LOCAL_RANK') is not None:
         return int(os.environ.get('OMPI_COMM_WORLD_LOCAL_RANK') or 0)
     else:
-        return 0 
+        return 0
 
 
 def get_master_ip():

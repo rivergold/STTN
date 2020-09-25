@@ -16,7 +16,10 @@ from core.dist import (
 )
 
 parser = argparse.ArgumentParser(description='STTN')
-parser.add_argument('-c', '--config', default='configs/youtube-vos.json', type=str)
+parser.add_argument('-c',
+                    '--config',
+                    default='configs/youtube-vos.json',
+                    type=str)
 parser.add_argument('-m', '--model', default='sttn', type=str)
 parser.add_argument('-p', '--port', default='23455', type=str)
 parser.add_argument('-e', '--exam', action='store_true')
@@ -32,32 +35,33 @@ def main_worker(rank, config):
                                              init_method=config['init_method'],
                                              world_size=config['world_size'],
                                              rank=config['global_rank'],
-                                             group_name='mtorch'
-                                             )
-        print('using GPU {}-{} for training'.format(
-            int(config['global_rank']), int(config['local_rank'])))
+                                             group_name='mtorch')
+        print('using GPU {}-{} for training'.format(int(config['global_rank']),
+                                                    int(config['local_rank'])))
 
-    config['save_dir'] = os.path.join(config['save_dir'], '{}_{}'.format(config['model'],
-                                                                         os.path.basename(args.config).split('.')[0]))
-    if torch.cuda.is_available(): 
+    config['save_dir'] = os.path.join(
+        config['save_dir'],
+        '{}_{}'.format(config['model'],
+                       os.path.basename(args.config).split('.')[0]))
+    if torch.cuda.is_available():
         config['device'] = torch.device("cuda:{}".format(config['local_rank']))
-    else: 
+    else:
         config['device'] = 'cpu'
 
     if (not config['distributed']) or config['global_rank'] == 0:
         os.makedirs(config['save_dir'], exist_ok=True)
-        config_path = os.path.join(
-            config['save_dir'], config['config'].split('/')[-1])
+        config_path = os.path.join(config['save_dir'],
+                                   config['config'].split('/')[-1])
         if not os.path.isfile(config_path):
             copyfile(config['config'], config_path)
         print('[**] create folder {}'.format(config['save_dir']))
-    
+
     trainer = Trainer(config, debug=args.exam)
     trainer.train()
 
 
 if __name__ == "__main__":
-    
+
     # loading configs
     config = json.load(open(args.config))
     config['model'] = args.model
@@ -70,10 +74,10 @@ if __name__ == "__main__":
 
     # setup distributed parallel training environments
     if get_master_ip() == "127.0.0.1":
-        # manually launch distributed processes 
-        mp.spawn(main_worker, nprocs=config['world_size'], args=(config,))
+        # manually launch distributed processes
+        mp.spawn(main_worker, nprocs=config['world_size'], args=(config, ))
     else:
-        # multiple processes have been launched by openmpi 
+        # multiple processes have been launched by openmpi
         config['local_rank'] = get_local_rank()
         config['global_rank'] = get_global_rank()
         main_worker(-1, config)
